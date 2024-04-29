@@ -1,0 +1,48 @@
+/* Importaciones de fuentes */
+@font-face {
+  font-family: "Scrabbles";
+  src: url("../assets/fonts/Stay\ Calm.otf");
+  /* Puedes agregar más formatos de fuente aquí si es necesario */
+}
+/**
+* CSS para SweetAlert
+*/
+.swal-inicio {
+  width: 60%;
+}
+
+/* Titulo */
+.swal-title-inicio {
+  font-family: "Scrabbles";
+  font-size: 100px;
+  font-weight: 0px;
+  padding-top: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Formulario */
+.swal-label-inicio {
+  justify-content: flex-start;
+  margin-left: 2.7%;
+  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+}
+.swal-input-inicio {
+  width: 95%;
+  margin-top: 1%;
+  margin-left: 0%;
+  margin-bottom: 3%;
+  margin-right: 0px;
+}
+
+.swal-ultimo-input-inicio {
+  width: 95%;
+  margin-top: 1%;
+  margin-left: 0%;
+  margin-right: 0px;
+}
+
+.swal2-actions {
+  margin-top: 0px;
+}

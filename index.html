@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ca" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <title>El penjat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/penjat.css">
+    <link rel="stylesheet" href="css/swal.css">
+    <script type="text/javascript" src="js/penjat.js"></script>
+
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Sweetalert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <div class="main_container">
+        <div class="scaffold_container">
+            <img src="img/monster0.png" alt="monstre penjat" id="monster" class="monster">
+        </div>
+        <div class="buttons_container">
+            <div class="button lives">
+                <span id="lives">5 LIVES LEFT</span>
+            </div>
+        </div>
+        <div class="letters_container">
+            <span id="letters">______</span>
+        </div>
+        <div id="info" class="info">
+            <div>
+                <span>
+                    <span id="welcome" class="info_msg">No permetis que la massa enfurismada pengi al monstre per no
+                        saber vocabulari. Ajuda'l a salvar-se!</span>
+                    <span id="game_success" class="info_msg">Has salvat al monstre. Enhorabona!</span>
+                    <span id="game_fail" class="info_msg">No has salvat al monstre. Llàstima!</span>
+                    <button id="btn_ok" class="btn">Continuar</button>
+                </span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
