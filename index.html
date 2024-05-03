@@ -7,13 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/penjat.css">
     <link rel="stylesheet" href="css/swal.css">
-    <script type="text/javascript" src="js/penjat.js"></script>
-
-    <!-- JQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <!-- Sweetalert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="js/penjat.js"></script>
 </head>
 
 <body>
@@ -22,6 +22,9 @@
             <img src="img/monster0.png" alt="monstre penjat" id="monster" class="monster">
         </div>
         <div class="buttons_container">
+            <div id="new_game" class="button new_game" onclick="nouJoc()">
+                <span>new game</span>
+            </div>
             <div class="button lives">
                 <span id="lives">5 LIVES LEFT</span>
             </div>
