@@ -26,11 +26,12 @@ window.onload = function () {
   var caixaPista = document.querySelector("#clue");
   // Iniciarem el joc i li afegim un "then" per quan es finalitzi el joc mostri la informació de la partida
   iniciarJoc().then((response) => {
+    console.log(response);
     // Mostrem la informació de la partida
-    verInfoPartida(response, caixaParaula);
+    verInfoPartida(response.gameName, caixaParaula);
 
     // Escoltarem les lletres que es polsin
-    escoltarLletres(response, caixaParaula, response.gameName);
+    escoltarLletres(caixaParaula, response.gameName);
   });
 
   // Mostrem la paraula random per consola
@@ -48,22 +49,15 @@ function nouJoc() {
   location.reload();
 }
 
-function verInfoPartida(response, caixaParaula) {
+function verInfoPartida(nomSala, caixaParaula) {
   // Mostrem la informació de la partida
   peticioAPI({
     action: "infoGame",
-    gameName: response.gameName,
+    gameName: nomSala,
   }).then((response) => {
     console.log(response.gameInfo.wordCompleted);
 
-    // Mostrem la paraula random
-    for (
-      let index = 0;
-      index < response.gameInfo.wordCompleted.length;
-      index++
-    ) {
-      caixaParaula.innerHTML += "_";
-    }
+    caixaParaula.innerHTML = response.gameInfo.wordCompleted;
   });
 }
 // Funcions
@@ -150,19 +144,20 @@ function peticioAPI(bodyData) {
  * @param {*} missatgesDelJoc
  * @param {*} botoContinuar
  */
-function escoltarLletres(responseInfoGame, nomSala, caixaParaula) {
+function escoltarLletres(caixaParaula, nomSala) {
   // Escoltarem les lletres que es polsin
   document.addEventListener("keyup", function (event) {
     var letra = event.key;
     var letras = "abcçdefghijklmnopqrstuvwxyz";
     if (letras.indexOf(letra) != -1) {
+      let player = prompt("Introdueix el teu nom de jugador:");
       peticioAPI({
         action: "playGame",
         gameName: nomSala,
         word: letra,
-        player: "P1",
+        player: player,
       }).then(response => {
-        verInfoPartida(responseInfoGame, caixaParaula);
+        verInfoPartida(nomSala, caixaParaula);
       })
     }
   });
