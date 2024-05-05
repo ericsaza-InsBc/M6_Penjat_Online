@@ -78,6 +78,11 @@ div.buttons_container {
     height: 35%;
 }
 
+.currentPlayer {
+    background-color: #3a111a;
+    height: 35%;
+}
+
 div.letters_container {
     width: 100%;
     height: 20%;

@@ -5,6 +5,10 @@
 const ws = new WebSocket("ws://localhost:3000");
 var currentPlayer = "";
 var nomSala = "";
+var lives;
+var currentPlayerButton;
+var wordCompleted;
+var caixaParaula;
 
 var infoPlayer = {
   playerName: "",
@@ -36,7 +40,11 @@ ws.onmessage = (message) => {
         allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
       });
     }
-  } else {
+  }else if (infoSala.typeMessage == "updateTorn") {
+    currentPlayerButton.innerHTML = "TORN: " + infoSala.otherPlayer;
+  }else if (infoSala.typeMessage == "updateWord") {
+    caixaParaula.innerHTML = infoSala.wordCompleted;
+  }else {
     infoSala.player == "P1" ? (currentPlayer = "P1") : (currentPlayer = "P2");
     infoPlayer.playerName = currentPlayer;
   }
@@ -48,8 +56,9 @@ $(document).ready();
  */
 window.onload = function () {
   // Elements HTML necesaris
-  var caixaParaula = document.querySelector("#letters");
-  var lives = document.querySelector("#lives");
+  caixaParaula = document.querySelector("#letters");
+  lives = document.querySelector("#lives");
+  currentPlayerButton =  document.querySelector("#currentPlayer");
 
   // Iniciarem el joc i li afegim un "then" per quan es finalitzi el joc mostri la informació de la partida
   iniciarJoc().then((response) => {
@@ -76,7 +85,8 @@ function verInfoPartida(nomSala, caixaParaula) {
   }).then((response) => {
     console.log(response.gameInfo.wordCompleted);
 
-    caixaParaula.innerHTML = response.gameInfo.wordCompleted;
+    ws.send(JSON.stringify({typeMessage : "updateWord", gameName: nomSala, wordCompleted: response.gameInfo.wordCompleted}));
+    wordCompleted = response.gameInfo.wordCompleted;
 
     if (!response.gameInfo.wordCompleted.includes("_")) {
       ws.send(
@@ -164,28 +174,29 @@ function peticioAPI(bodyData) {
         data: JSON.stringify(bodyData),
         success: function (response) {
           console.log(response);
-          if (response.response.includes("Word incorrect")) {
-            infoPlayer.lives--;
-            console.log(infoPlayer.lives);
-            $('#monster').attr('src', 'img/monster' + (5 - infoPlayer.lives) + '.png');
-            otherPlayer = infoPlayer.playerName == "P1" ? "P2" : "P1";
-            Swal.fire({
-              icon: "info",
-              title: "No has encertat! Torn de " + otherPlayer,
-              text: "Espera a que l'altre usuari escolleixi una lletra",
-              allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
-            });
-            lives.innerHTML = infoPlayer.lives + " LIVES LEFT";
-          } else if (response.response.includes("Player incorrect")) {
+          if (response.response.includes("Player incorrect")) {
             Swal.fire({
               icon: "info",
               title: "No es el teu torn!",
               text: "Espera a que l'altre usuari escolleixi una lletra",
               allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
             });
-          }
-
-          console.log(infoPlayer);
+          }else {
+            otherPlayer = infoPlayer.playerName == "P1" ? "P2" : "P1";
+            if (response.response.includes("Word incorrect")) {
+              infoPlayer.lives--;
+              console.log(infoPlayer.lives);
+              $('#monster').attr('src', 'img/monster' + (5 - infoPlayer.lives) + '.png');
+              Swal.fire({
+                icon: "info",
+                title: "No has encertat! Torn de " + otherPlayer,
+                text: "Espera a que l'altre usuari escolleixi una lletra",
+                allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
+              });
+              lives.innerHTML = infoPlayer.lives + " LIVES LEFT";
+            }
+            ws.send(JSON.stringify({typeMessage : "updateTorn", otherPlayer:otherPlayer, gameName: nomSala}));
+          }  
           resolve(response);
         },
         error: function (xhr, status, error) {
@@ -227,32 +238,10 @@ function escoltarLletres(caixaParaula, nomSala) {
       }).then((response) => {
          // Una vez que se haya jugado la letra, actualiza la palabra en la pantalla
         verInfoPartida(nomSala, caixaParaula);
-
-        // Además, envía la nueva palabra a todos los clientes en la sala
-        enviarNuevaPalabra(nomSala);
       });
     }
   };
   document.addEventListener("keydown", keyUp);
-}
-
-// Función para enviar la nueva palabra a todos los clientes en la sala
-function enviarNuevaPalabra(nomSala) {
-  // Obtener la nueva palabra del servidor
-  peticioAPI({
-    action: "infoGame",
-    gameName: nomSala,
-  }).then((response) => {
-    // Enviar la nueva palabra a todos los clientes en la sala a través del WebSocket
-    wss.clients.forEach((client) => {
-      client.send(
-        JSON.stringify({
-          typeMessage: "updateWord",
-          word: response.gameInfo.wordCompleted,
-        })
-      );
-    });
-  });
 }
 
 function mostrarNomSala(nomSala) {

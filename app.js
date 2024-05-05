@@ -40,6 +40,7 @@ wss.on('connection', function connection(ws) {
   // Manejar mensajes recibidos
   ws.on('message', function incoming(message) {
     const infoSala = JSON.parse(message);
+    console.log(infoSala)
     if (infoSala.typeMessage === "createRoom") {
       const nomSala = infoSala.gameName;
       const creado = crearSala(nomSala, ws);
@@ -50,12 +51,31 @@ wss.on('connection', function connection(ws) {
     } else if (infoSala.typeMessage === "lostGame") {
       // Implementa la lógica para enviar un mensaje a todos los clientes en la sala cuando se pierde el juego
       const nomSala = infoSala.gameName;
-      console.log(nomSala)
 
       if (salas.has(nomSala)) {
         const clientesEnSala = salas.get(nomSala);
         clientesEnSala.forEach(cliente => {
           cliente.send(JSON.stringify({ typeMessage: "winner", winner: infoSala.winner }));
+        });
+      }
+    }else if (infoSala.typeMessage === "updateTorn") {
+      // Implementa la lógica para enviar un mensaje a todos los clientes en la sala cuando se pierde el juego
+      const nomSala = infoSala.gameName;
+
+      if (salas.has(nomSala)) {
+        const clientesEnSala = salas.get(nomSala);
+        clientesEnSala.forEach(cliente => {
+          cliente.send(JSON.stringify({typeMessage:"updateTorn", otherPlayer:infoSala.otherPlayer}));
+        });
+      }
+    }else if (infoSala.typeMessage === "updateWord") {
+      // Implementa la lógica para enviar un mensaje a todos los clientes en la sala cuando se pierde el juego
+      const nomSala = infoSala.gameName;
+
+      if (salas.has(nomSala)) {
+        const clientesEnSala = salas.get(nomSala);
+        clientesEnSala.forEach(cliente => {
+          cliente.send(JSON.stringify({typeMessage:"updateWord",  wordCompleted: infoSala.wordCompleted}));
         });
       }
     }
