@@ -9,7 +9,7 @@ var lives;
 var currentPlayerButton;
 var wordCompleted;
 var caixaParaula;
-
+var keyUp;
 var infoPlayer = {
   playerName: "",
   lives: 5,
@@ -38,6 +38,7 @@ ws.onmessage = (message) => {
       // Botó per a començar un nou joc
       document.querySelector("#new_game").addEventListener("click", nouJoc);
     } else {
+      document.removeEventListener("keyup", keyUp);
       Swal.fire({
         icon: "error",
         title: "Partida acabada!",
@@ -278,7 +279,7 @@ function escoltarLletres(caixaParaula, nomSala) {
   };
 
   // Escoltara les tecles que es polsin
-  document.addEventListener("keydown", keyUp);
+  document.addEventListener("keyup", keyUp);
 }
 
 /**
