@@ -17,25 +17,27 @@ ws.onopen = () => {
 
 ws.onmessage = (message) => {
   var infoSala = JSON.parse(message.data);
-  console.log(infoSala)
+  console.log(infoSala);
 
   if (infoSala.typeMessage == "winner") {
-    document.removeEventListener("keyup",keyUp);
+    document.removeEventListener("keyup", keyUp);
     if (infoPlayer.playerName == infoSala.winner) {
       Swal.fire({
         icon: "success",
         title: "Partida acabada!",
-        text: "Felicitats has guanyat!"
+        text: "Felicitats has guanyat!",
+        allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
       });
-    }else {
+    } else {
       Swal.fire({
         icon: "error",
         title: "Partida acabada!",
-        text: "Quina pena has perdut, mes sort la próxima vegada!"
+        text: "Quina pena has perdut, mes sort la próxima vegada!",
+        allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
       });
     }
-  }else {
-    infoSala.player == "P1" ? currentPlayer = "P1" : currentPlayer = "P2";
+  } else {
+    infoSala.player == "P1" ? (currentPlayer = "P1") : (currentPlayer = "P2");
     infoPlayer.playerName = currentPlayer;
   }
 };
@@ -52,22 +54,13 @@ window.onload = function () {
   // Iniciarem el joc i li afegim un "then" per quan es finalitzi el joc mostri la informació de la partida
   iniciarJoc().then((response) => {
     console.log(response);
+    mostrarNomSala(response.gameName);
     // Mostrem la informació de la partida
     verInfoPartida(response.gameName, caixaParaula);
 
     // Escoltarem les lletres que es polsin
     escoltarLletres(caixaParaula, response.gameName);
-
   });
-
-  // Mostrem la paraula random per consola
-  // console.log(paraulaRandom);
-
-  // Mostrarem la pista
-  // pista(caixaPista, paraulaRandom, caixaParaula, ventanaInfo, missatgesDelJoc, botoContinuar);
-
-  // // Quan es polsi el boto de nou joc es reiniciara el joc
-  // reiniciarJoc(botoNouJoc);
 };
 
 function nouJoc() {
@@ -84,6 +77,16 @@ function verInfoPartida(nomSala, caixaParaula) {
     console.log(response.gameInfo.wordCompleted);
 
     caixaParaula.innerHTML = response.gameInfo.wordCompleted;
+
+    if (!response.gameInfo.wordCompleted.includes("_")) {
+      ws.send(
+        JSON.stringify({
+          typeMessage: "lostGame",
+          winner: response.player == "P1" ? "P2" : "P1",
+          gameName: nomSala,
+        })
+      );
+    }
   });
 }
 // Funcions
@@ -125,8 +128,14 @@ async function iniciarJoc() {
         }
 
         // Retornem el nom de la sala i la contrasenya
-        ws.send(JSON.stringify({ typeMessage:"createRoom", gameName: nomSala, gamePassword: contrasenyaSala}));
-        return {gameName: nomSala, gamePassword: contrasenyaSala };
+        ws.send(
+          JSON.stringify({
+            typeMessage: "createRoom",
+            gameName: nomSala,
+            gamePassword: contrasenyaSala,
+          })
+        );
+        return { gameName: nomSala, gamePassword: contrasenyaSala };
       });
     },
     customClass: {
@@ -140,50 +149,59 @@ async function iniciarJoc() {
 // Al clickar la tecla "i" es mostrara la informació de la partida per consola
 document.addEventListener("keyup", function (event) {
   if (event.key == "i") {
-    console.log(peticioAPI(mostrarInfoPartida));
+    console.log(peticioAPI({ action: "infoGame", gameName: "eric1234567" }));
   }
 });
 
 // Petició a la API
 function peticioAPI(bodyData) {
-    if( infoPlayer.lives > 0 ) {
-        return new Promise(function (resolve, reject) {
-            $.ajax({
-              url: "https://penjat.codifi.cat/",
-              method: "POST",
-              contentType: "application/json",
-              data: JSON.stringify(bodyData),
-              success: function (response) {
-                console.log(response);
-                if(response.response.includes("Word incorrect")) {
-                  infoPlayer.lives--;
-                  otherPlayer = infoPlayer.playerName == "P1" ? "P2": "P1";
-                  Swal.fire({
-                    icon: "info",
-                    title: "No has encertat! Torn de " + otherPlayer,
-                    text: "Espera a que l'altre usuari escolleixi una lletra",
-                  });
-                  lives.innerHTML = infoPlayer.lives + " LIVES LEFT"
-                }else if(response.response.includes("Player incorrect")) {
-                    Swal.fire({
-                      icon: "info",
-                      title: "No es el teu torn!",
-                      text: "Espera a que l'altre usuari escolleixi una lletra",
-                    });
-                }
-          
+  if (infoPlayer.lives > 0) {
+    return new Promise(function (resolve, reject) {
+      $.ajax({
+        url: "https://penjat.codifi.cat/",
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(bodyData),
+        success: function (response) {
+          console.log(response);
+          if (response.response.includes("Word incorrect")) {
+            infoPlayer.lives--;
+            console.log(infoPlayer.lives);
+            $('#monster').attr('src', 'img/monster' + (5 - infoPlayer.lives) + '.png');
+            otherPlayer = infoPlayer.playerName == "P1" ? "P2" : "P1";
+            Swal.fire({
+              icon: "info",
+              title: "No has encertat! Torn de " + otherPlayer,
+              text: "Espera a que l'altre usuari escolleixi una lletra",
+              allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
+            });
+            lives.innerHTML = infoPlayer.lives + " LIVES LEFT";
+          } else if (response.response.includes("Player incorrect")) {
+            Swal.fire({
+              icon: "info",
+              title: "No es el teu torn!",
+              text: "Espera a que l'altre usuari escolleixi una lletra",
+              allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
+            });
+          }
 
-              console.log(infoPlayer)
-              resolve(response);
-            },
-            error: function (xhr, status, error) {
-              reject(error);
-            },
-          });
-        });
-  }else {
+          console.log(infoPlayer);
+          resolve(response);
+        },
+        error: function (xhr, status, error) {
+          reject(error);
+        },
+      });
+    });
+  } else {
     winner = infoPlayer.playerName == "P1" ? "P2" : "P1";
-    ws.send(JSON.stringify({ typeMessage: "lostGame", winner: winner, gameName: nomSala  }))
+    ws.send(
+      JSON.stringify({
+        typeMessage: "lostGame",
+        winner: winner,
+        gameName: nomSala,
+      })
+    );
   }
 }
 
@@ -196,22 +214,58 @@ function peticioAPI(bodyData) {
  * @param {*} botoContinuar
  */
 function escoltarLletres(caixaParaula, nomSala) {
-   keyUp = (event) => {
+  keyUp = (event) => {
     var letra = event.key;
     var letras = "abcçdefghijklmnopqrstuvwxyz";
-    console.log(currentPlayer)
+    console.log(currentPlayer);
     if (letras.indexOf(letra) != -1) {
       peticioAPI({
         action: "playGame",
         gameName: nomSala,
         word: letra,
         player: currentPlayer,
-      }).then(response => {
+      }).then((response) => {
+         // Una vez que se haya jugado la letra, actualiza la palabra en la pantalla
         verInfoPartida(nomSala, caixaParaula);
-      })
+
+        // Además, envía la nueva palabra a todos los clientes en la sala
+        enviarNuevaPalabra(nomSala);
+      });
     }
   };
-      document.addEventListener("keyup",keyUp);
+  document.addEventListener("keydown", keyUp);
 }
 
+// Función para enviar la nueva palabra a todos los clientes en la sala
+function enviarNuevaPalabra(nomSala) {
+  // Obtener la nueva palabra del servidor
+  peticioAPI({
+    action: "infoGame",
+    gameName: nomSala,
+  }).then((response) => {
+    // Enviar la nueva palabra a todos los clientes en la sala a través del WebSocket
+    wss.clients.forEach((client) => {
+      client.send(
+        JSON.stringify({
+          typeMessage: "updateWord",
+          word: response.gameInfo.wordCompleted,
+        })
+      );
+    });
+  });
+}
 
+function mostrarNomSala(nomSala) {
+  Toastify({
+    text: "Ets a la sala: " + nomSala,
+    duration: 3000,
+    gravity: "top",
+    position: "center",
+    style: {
+      background: "#323232",
+      width: 3000,
+      paddingLeft: "100px",
+      paddingRight: "100px",
+    },
+  }).showToast();
+}
