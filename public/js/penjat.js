@@ -23,6 +23,8 @@ ws.onmessage = (message) => {
   var infoSala = JSON.parse(message.data);
   console.log(infoSala);
 
+
+  // Si el tipus de missatge es "winner" es mostrara un missatge de guanyador o perdedor
   if (infoSala.typeMessage == "winner") {
     document.removeEventListener("keyup", keyUp);
     if (infoPlayer.playerName == infoSala.winner) {
@@ -32,6 +34,9 @@ ws.onmessage = (message) => {
         text: "Felicitats has guanyat!",
         allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
       });
+
+      // Botó per a començar un nou joc
+      document.querySelector("#new_game").addEventListener("click", nouJoc);
     } else {
       Swal.fire({
         icon: "error",
@@ -39,6 +44,9 @@ ws.onmessage = (message) => {
         text: "Quina pena has perdut, mes sort la próxima vegada!",
         allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
       });
+      
+      // Botó per a començar un nou joc
+      document.querySelector("#new_game").addEventListener("click", nouJoc);
     }
   }else if (infoSala.typeMessage == "updateTorn") {
     currentPlayerButton.innerHTML = "TORN: " + infoSala.otherPlayer;
@@ -62,8 +70,8 @@ window.onload = function () {
 
   // Iniciarem el joc i li afegim un "then" per quan es finalitzi el joc mostri la informació de la partida
   iniciarJoc().then((response) => {
-    console.log(response);
     mostrarNomSala(response.gameName);
+
     // Mostrem la informació de la partida
     verInfoPartida(response.gameName, caixaParaula);
 
@@ -72,12 +80,21 @@ window.onload = function () {
   });
 };
 
+/**
+ * Funció per a començar un nou joc
+ */
 function nouJoc() {
   // Fem que recarregui la pàgina
   location.reload();
 }
 
+/**
+ * Funció per a mostrar la informació de la partida
+ * @param {*} nomSala 
+ * @param {*} caixaParaula 
+ */
 function verInfoPartida(nomSala, caixaParaula) {
+
   // Mostrem la informació de la partida
   peticioAPI({
     action: "infoGame",
@@ -85,9 +102,11 @@ function verInfoPartida(nomSala, caixaParaula) {
   }).then((response) => {
     console.log(response.gameInfo.wordCompleted);
 
+    // Mostrem la paraula incompleta
     ws.send(JSON.stringify({typeMessage : "updateWord", gameName: nomSala, wordCompleted: response.gameInfo.wordCompleted}));
     wordCompleted = response.gameInfo.wordCompleted;
 
+    // Mostrem les vides
     if (!response.gameInfo.wordCompleted.includes("_")) {
       ws.send(
         JSON.stringify({
@@ -99,7 +118,11 @@ function verInfoPartida(nomSala, caixaParaula) {
     }
   });
 }
-// Funcions
+
+/**
+ * Funció per a iniciar el joc
+ * @returns  {Promise} Retorna el nom de la sala i la contrasenya
+ */
 async function iniciarJoc() {
   const { value: datosInicio } = await Swal.fire({
     html: `
@@ -114,6 +137,7 @@ async function iniciarJoc() {
     allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
     confirmButtonText: "Jugar",
     preConfirm: () => {
+
       // Obtenim el nom de la sala i la contrasenya
       nomSala = document.getElementById("nom_sala").value;
       const contrasenyaSala = document.getElementById("contrasenya_sala").value;
@@ -132,6 +156,8 @@ async function iniciarJoc() {
         gameName: nomSala,
         gamePassword: contrasenyaSala,
       }).then(function (response) {
+
+        // Si la contrasenya es incorrecta no es pot continuar
         if (response.status === "KO" || response == "<br>") {
           Swal.showValidationMessage("Contrasenya incorrecta");
           return false;
@@ -148,6 +174,8 @@ async function iniciarJoc() {
         return { gameName: nomSala, gamePassword: contrasenyaSala };
       });
     },
+
+    // Estils de la finestra
     customClass: {
       popup: "swal-inicio",
       title: "swal-title-inicio",
@@ -156,14 +184,11 @@ async function iniciarJoc() {
   return datosInicio;
 }
 
-// Al clickar la tecla "i" es mostrara la informació de la partida per consola
-document.addEventListener("keyup", function (event) {
-  if (event.key == "i") {
-    console.log(peticioAPI({ action: "infoGame", gameName: "eric1234567" }));
-  }
-});
-
-// Petició a la API
+/**
+ * Funció per a fer peticions a l'API
+ * @param {*} bodyData 
+ * @returns  {Promise} Retorna la resposta de l'API
+ */
 function peticioAPI(bodyData) {
   if (infoPlayer.lives > 0) {
     return new Promise(function (resolve, reject) {
@@ -173,7 +198,8 @@ function peticioAPI(bodyData) {
         contentType: "application/json",
         data: JSON.stringify(bodyData),
         success: function (response) {
-          console.log(response);
+
+          // Si la resposta es "Player incorrect" es mostra un missatge d'informació
           if (response.response.includes("Player incorrect")) {
             Swal.fire({
               icon: "info",
@@ -182,6 +208,8 @@ function peticioAPI(bodyData) {
               allowOutsideClick: false, // Aquí se establece para evitar que se cierre al hacer clic fuera
             });
           }else {
+
+            // Si la resposta es "Word incorrect" es mostra un missatge d'informació
             otherPlayer = infoPlayer.playerName == "P1" ? "P2" : "P1";
             if (response.response.includes("Word incorrect")) {
               infoPlayer.lives--;
@@ -195,6 +223,8 @@ function peticioAPI(bodyData) {
               });
               lives.innerHTML = infoPlayer.lives + " LIVES LEFT";
             }
+
+            // Si la resposta es "Word correct" es mostra un missatge d'informació
             ws.send(JSON.stringify({typeMessage : "updateTorn", otherPlayer:otherPlayer, gameName: nomSala}));
           }  
           resolve(response);
@@ -205,6 +235,8 @@ function peticioAPI(bodyData) {
       });
     });
   } else {
+
+    // Si les vides son 0 es mostra un missatge d'informació
     winner = infoPlayer.playerName == "P1" ? "P2" : "P1";
     ws.send(
       JSON.stringify({
@@ -229,6 +261,8 @@ function escoltarLletres(caixaParaula, nomSala) {
     var letra = event.key;
     var letras = "abcçdefghijklmnopqrstuvwxyz";
     console.log(currentPlayer);
+
+    // Si la lletra polsada es correcta es jugara la lletra
     if (letras.indexOf(letra) != -1) {
       peticioAPI({
         action: "playGame",
@@ -236,14 +270,21 @@ function escoltarLletres(caixaParaula, nomSala) {
         word: letra,
         player: currentPlayer,
       }).then((response) => {
+
          // Una vez que se haya jugado la letra, actualiza la palabra en la pantalla
         verInfoPartida(nomSala, caixaParaula);
       });
     }
   };
+
+  // Escoltara les tecles que es polsin
   document.addEventListener("keydown", keyUp);
 }
 
+/**
+ * Funció per a mostrar el nom de la sala
+ * @param {*} nomSala  Nom de la sala
+ */
 function mostrarNomSala(nomSala) {
   Toastify({
     text: "Ets a la sala: " + nomSala,
